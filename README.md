@@ -4,6 +4,9 @@ An MCP (Model Context Protocol) server that exposes PeerPesa's payment API as
 tools an AI agent can call directly: check balance, quote an FX rate, send a
 transfer, check status, list history, cancel.
 
+See [docs/how-it-works.md](docs/how-it-works.md) for a deeper walkthrough of
+the request lifecycle, the MCP tool-call flow, and where to make changes.
+
 ## Structure
 
 ```
