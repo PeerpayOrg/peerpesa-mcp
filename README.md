@@ -113,6 +113,9 @@ This wrapper alone doesn't give the calling agent a verifiable identity — it
 just exposes PeerPesa. To register with Self Agent ID (which sits on the
 existing ERC-8004 registry on Celo mainnet):
 
+See [docs/self-agent-id-registration.md](docs/self-agent-id-registration.md)
+for the full breakdown of this flow and how it relates to this codebase.
+
 1. Generate or designate the agent's key pair / wallet address.
 2. Complete Self's proof-of-human flow for the human operator behind the agent.
 3. Register the agent against the ERC-8004 registry via Self's SDK, associating
@@ -124,3 +127,6 @@ Self's SDK/contracts, not something this MCP server needs to implement itself
 unless you want the MCP server to also expose an `get_agent_identity` tool
 that surfaces the registration status to callers.
 # peerpesa-mcp
+
+
+
