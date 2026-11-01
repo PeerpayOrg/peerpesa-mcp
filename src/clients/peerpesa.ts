@@ -1,17 +1,4 @@
-import { PeerPesaConfig } from "./config.js";
-
-/**
- * Thin adapter over PeerPesa's REST API.
- *
- * This is the ONLY file that should know about PeerPesa's actual endpoint
- * paths, request/response shapes, and auth header format. Everything in
- * index.ts talks to this class, not to fetch() directly — so when the real
- * API spec lands, you edit here and the MCP tool surface doesn't move.
- *
- * Endpoint paths below (/balance, /quotes, /transfers, ...) are placeholders
- * based on typical mobile-money / remittance API shapes. Replace with the
- * actual PeerPesa paths and field names.
- */
+import { PeerPesaConfig } from "../config.js";
 
 export interface Balance {
   currency: string;
@@ -37,7 +24,6 @@ export interface TransferRequest {
   amount: number;
   recipient: {
     name: string;
-    /** Phone number, mobile money handle, or account identifier. */
     destination: string;
     method: "mobile_money" | "bank" | "wallet";
   };
@@ -67,7 +53,7 @@ export interface TransferList {
   nextCursor?: string;
 }
 
-class PeerPesaApiError extends Error {
+export class PeerPesaApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
@@ -111,11 +97,7 @@ export class PeerPesaClient {
       const body = text ? JSON.parse(text) : undefined;
 
       if (!res.ok) {
-        throw new PeerPesaApiError(
-          `PeerPesa API error ${res.status} on ${path}`,
-          res.status,
-          body
-        );
+        throw new PeerPesaApiError(`PeerPesa API error ${res.status} on ${path}`, res.status, body);
       }
       return body as T;
     } finally {
@@ -123,29 +105,16 @@ export class PeerPesaClient {
     }
   }
 
-  /** Current wallet balance(s). */
   getBalance(currency?: string): Promise<Balance[]> {
     return this.request<Balance[]>("/balance", { query: { currency } });
   }
 
-  /** Lock in an FX rate before sending, so the transfer amount is guaranteed. */
-  createQuote(params: {
-    fromCurrency: string;
-    toCurrency: string;
-    amount: number;
-  }): Promise<Quote> {
-    return this.request<Quote>("/quotes", {
-      method: "POST",
-      body: JSON.stringify(params),
-    });
+  createQuote(params: { fromCurrency: string; toCurrency: string; amount: number }): Promise<Quote> {
+    return this.request<Quote>("/quotes", { method: "POST", body: JSON.stringify(params) });
   }
 
-  /** Initiate a transfer, optionally against a previously created quote. */
   createTransfer(params: TransferRequest): Promise<Transfer> {
-    return this.request<Transfer>("/transfers", {
-      method: "POST",
-      body: JSON.stringify(params),
-    });
+    return this.request<Transfer>("/transfers", { method: "POST", body: JSON.stringify(params) });
   }
 
   getTransfer(transferId: string): Promise<Transfer> {
@@ -154,11 +123,7 @@ export class PeerPesaClient {
 
   listTransfers(params: TransferListParams = {}): Promise<TransferList> {
     return this.request<TransferList>("/transfers", {
-      query: {
-        status: params.status,
-        limit: params.limit,
-        cursor: params.cursor,
-      },
+      query: { status: params.status, limit: params.limit, cursor: params.cursor },
     });
   }
 
@@ -168,5 +133,3 @@ export class PeerPesaClient {
     });
   }
 }
-
-export { PeerPesaApiError };

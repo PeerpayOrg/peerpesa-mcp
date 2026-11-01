@@ -37,6 +37,8 @@ this talks to anything real.
 | `get_transfer_status` | Look up one transfer by id |
 | `list_transfers` | Paginated transfer history, filterable by status |
 | `cancel_transfer` | Cancel a still-pending transfer |
+| `get_agent_identity` | Check this agent's Self Agent ID (ERC-8004) registration status |
+| `register_agent_identity` | Register this agent's wallet against the ERC-8004 registry via Self |
 
 ## Setup
 
