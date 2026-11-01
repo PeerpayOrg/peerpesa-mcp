@@ -54,3 +54,21 @@ export function loadSelfAgentIdConfig(): SelfAgentIdConfig {
     registryAddress: process.env.SELF_AGENT_REGISTRY_ADDRESS,
   };
 }
+
+/**
+ * Celo DeFi (Uniswap V3) config. Shares CELO_RPC_URL and AGENT_WALLET_PRIVATE_KEY
+ * with the Self Agent ID setup. rpcUrl defaults to Celo's public endpoint so
+ * read-only quote operations work without any extra config.
+ */
+export interface CeloDefiConfig {
+  rpcUrl: string;
+  /** Required only for execute_defi_swap — omit for quote-only use. */
+  privateKey?: string;
+}
+
+export function loadCeloDefiConfig(): CeloDefiConfig {
+  return {
+    rpcUrl: process.env.CELO_RPC_URL ?? "https://forno.celo.org",
+    privateKey: process.env.AGENT_WALLET_PRIVATE_KEY,
+  };
+}
