@@ -51,29 +51,61 @@ Keeping these separate means:
 4. **Apply to Celo Agent Visa.** With a valid registry entry, apply to the
    program using that registration as proof of a verified agent identity.
 
-None of these steps run inside `peerpesa-mcp` — they're a call against
-Self's SDK/contracts, done once (or whenever credentials rotate) as part of
-standing up the agent, not on every tool call.
+Most of this (steps 1–2, and the Celo Agent Visa application in step 4)
+happens once, outside this codebase, against Self's own tooling. Step 3 —
+writing the registration into ERC-8004 — is the part this server can
+expose as a tool.
 
-## If you want this server to expose registration status
+## What's scaffolded in this repo
 
-Today nothing in `src/` talks to Self or Celo. If it becomes useful for the
-calling agent to check its own registration status at runtime (rather than
-this being a one-time setup step done outside the server), the natural
-shape would be:
+`src/selfAgentId.ts` defines a `SelfAgentIdClient` (mirroring
+`peerpesaClient.ts`'s shape) with two methods, wired up as MCP tools in
+`index.ts`:
 
-- A `selfAgentId.ts` adapter (mirroring `peerpesaClient.ts`) that wraps
-  Self's SDK/contract calls — reads for status, and if needed writes for
-  registration.
-- New env vars in `config.ts` for whatever Self's SDK requires (wallet
-  key/RPC endpoint/Self API credentials).
-- A `get_agent_identity` tool in `index.ts` that surfaces registration
-  status (registered / not / pending) to the calling agent, following the
-  same `toolResult`/`toolError` pattern as the PeerPesa tools.
+- `get_agent_identity` → `SelfAgentIdClient#getStatus()` — read-only status
+  check.
+- `register_agent_identity` → `SelfAgentIdClient#register()` — writes the
+  ERC-8004 registration transaction. Like `send_transfer`, its tool
+  description says to only call it with explicit user authorization.
 
-That's a genuinely separate integration (different SDK, different auth,
-on-chain transactions instead of a REST API) — worth scoping as its own
-piece of work rather than bolting onto the PeerPesa client.
+Config lives in `config.ts` as `SelfAgentIdConfig` / `loadSelfAgentIdConfig()`,
+reading four **optional** env vars (documented in `.env.example`):
+
+| Variable | Purpose |
+|---|---|
+| `SELF_API_KEY` | Self API credential |
+| `CELO_RPC_URL` | RPC endpoint for Celo mainnet |
+| `AGENT_WALLET_PRIVATE_KEY` | The agent's wallet key used to sign the registration tx |
+| `SELF_AGENT_REGISTRY_ADDRESS` | ERC-8004 registry contract address |
+
+They're optional at the `config.ts` level — unlike `PEERPESA_API_KEY`, the
+server still boots and serves the PeerPesa tools if these are unset.
+`SelfAgentIdClient` checks for completeness itself: `getStatus()` returns
+`{ status: "not_configured", ... }` rather than throwing, and `register()`
+throws a clear `SelfAgentIdNotConfiguredError`.
+
+**What's still a TODO:** both methods currently throw
+"scaffolded but not implemented" once configured — there is no real call
+into Self's SDK or the ERC-8004 contract yet. That's intentional: the exact
+package, contract ABI, and call shape depend on Self's actual SDK docs (or
+an existing registration's details), which need to be supplied before
+wiring in the real implementation. Search for `TODO` in `selfAgentId.ts`
+for the two spots that need it.
+
+## Wiring in the real SDK
+
+Once you have Self's SDK package name and API surface (or details of an
+already-existing Self Agent ID this should connect to instead of
+registering fresh), the change is contained to `selfAgentId.ts`:
+
+1. Add the SDK as a dependency.
+2. Replace the `TODO` blocks in `getStatus()` and `register()` with real
+   SDK/contract calls, using `this.config` for credentials.
+3. Fill in real values for the four env vars above in `.env`.
+
+Nothing in `index.ts` needs to change — the tool surface (`get_agent_identity`,
+`register_agent_identity`) stays the same, same as the PeerPesa split
+described in `docs/how-it-works.md`.
 
 ## Where to go for details
 

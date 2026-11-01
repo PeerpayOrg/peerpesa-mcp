@@ -3,8 +3,6 @@
  * Swap PEERPESA_BASE_URL / auth scheme here once real credentials exist —
  * nothing else in the server should need to change.
  */
-import "dotenv/config";
-
 export interface PeerPesaConfig {
   baseUrl: string;
   apiKey: string;
@@ -31,5 +29,28 @@ export function loadConfig(): PeerPesaConfig {
     apiKey: requireEnv("PEERPESA_API_KEY"),
     clientId: process.env.PEERPESA_CLIENT_ID,
     timeoutMs: Number(process.env.PEERPESA_TIMEOUT_MS ?? 15000),
+  };
+}
+
+/**
+ * Self Agent ID (ERC-8004 registry on Celo) credentials — see
+ * docs/self-agent-id-registration.md. Unlike PeerPesa config, these are
+ * all optional: the server must still boot and serve PeerPesa tools when
+ * identity registration hasn't been set up yet. SelfAgentIdClient checks
+ * for completeness itself before making any call.
+ */
+export interface SelfAgentIdConfig {
+  apiKey?: string;
+  celoRpcUrl?: string;
+  agentWalletPrivateKey?: string;
+  registryAddress?: string;
+}
+
+export function loadSelfAgentIdConfig(): SelfAgentIdConfig {
+  return {
+    apiKey: process.env.SELF_API_KEY,
+    celoRpcUrl: process.env.CELO_RPC_URL,
+    agentWalletPrivateKey: process.env.AGENT_WALLET_PRIVATE_KEY,
+    registryAddress: process.env.SELF_AGENT_REGISTRY_ADDRESS,
   };
 }
